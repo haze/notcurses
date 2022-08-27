@@ -206,6 +206,7 @@ pub fn addNotCursesSymbolsToStep(comptime root: []const u8, build_definition: Bu
     step.step.dependOn(&version_header_step.step);
     addNotCursesSources(root, step, build_definition.use_asan);
     addNotCursesCompatSources(root, step, build_definition.use_asan);
+    addNotCursesFfiSources(root, step, build_definition.use_asan);
 }
 
 pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep, build_definition: BuildDefinition) void {
