@@ -211,8 +211,7 @@ pub fn addNotCursesSymbolsToStep(comptime root: []const u8, build_definition: Bu
 
 pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep, build_definition: BuildDefinition) void {
     step.linkSystemLibrary("deflate");
-    step.linkSystemLibrary("terminfo");
-    step.linkSystemLibrary("libm");
+    step.linkSystemLibrary("tinfo");
     if (build_definition.use_gpm)
         step.linkSystemLibrary("gpm");
     step.linkSystemLibrary("unistring");
