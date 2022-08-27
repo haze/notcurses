@@ -208,11 +208,12 @@ pub fn addNotCursesSymbolsToStep(comptime root: []const u8, build_definition: Bu
     addNotCursesCompatSources(root, step, build_definition.use_asan);
 }
 
-pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep) void {
-    step.linkSystemLibrary("libdeflate");
+pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep, build_definition: BuildDefinition) void {
+    step.linkSystemLibrary("deflate");
     step.linkSystemLibrary("terminfo");
     step.linkSystemLibrary("libm");
-    step.linkSystemLibrary("gpm");
+    if (build_definition.use_gpm)
+        step.linkSystemLibrary("gpm");
     step.linkSystemLibrary("unistring");
 }
 
