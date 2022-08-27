@@ -155,7 +155,27 @@ pub const BuildDefinition = struct {
 pub fn build(b: *std.build.Builder) !void {
     const mode = b.standardReleaseOptions();
 
-    var build_definition = BuildDefinition.addOptionsToBuilder(b);
+    const build_definition = try addNotCursesOptions(b);
+    var notcurses_core = if (build_definition.use_static)
+        b.addStaticLibrary("notcurses-core-static", null)
+    else
+        b.addSharedLibrary("notcurses-core", null, .{
+            .versioned = notcurses_version,
+        });
+
+    try addNotCursesSymbolsToStep("", build_definition, b, notcurses_core);
+    notcurses_core.setBuildMode(mode);
+    notcurses_core.linkLibC();
+    notcurses_core.install();
+
+    // if you see this no you didnt
+    // notcurses_core.addIncludePath("/nix/store/n21y30l69psnvpwjr0la3kmlnrvc6qz7-ncurses-6.3-dev/include");
+    // notcurses_core.addIncludePath("/nix/store/9zc54l2sw1vbk4b22418yc4fq7b8mpy9-libunistring-0.9.10-dev/include");
+    // notcurses_core.addIncludePath("/nix/store/8n53jsvbnqxrasgwd3c2xjygai9v4byl-libdeflate-1.8/include");
+}
+
+pub fn addNotCursesOptions(builder: *std.build.Builder) !BuildDefinition {
+    var build_definition = BuildDefinition.addOptionsToBuilder(builder);
 
     if (build_definition.maybe_use_multimedia) |use_multimedia| {
         switch (use_multimedia) {
@@ -174,29 +194,18 @@ pub fn build(b: *std.build.Builder) !void {
     }
 
     std.log.info("Requested multimedia engine: {?}", .{build_definition.maybe_use_multimedia});
-    std.log.info("Requested build mode: {}", .{mode});
 
-    var notcurses_core = if (build_definition.use_static)
-        b.addStaticLibrary("notcurses-core-static", null)
-    else
-        b.addSharedLibrary("notcurses-core", null, .{
-            .versioned = notcurses_version,
-        });
+    return build_definition;
+}
 
-    const version_header_step = try CmakeGeneratedFileStep.create(b, notcurses_core, [2]Template{
+pub fn addNotCursesSymbolsToStep(comptime root: []const u8, build_definition: BuildDefinition, builder: *std.build.Builder, step: *std.build.LibExeObjStep) !void {
+    const version_header_step = try CmakeGeneratedFileStep.create(builder, step, [2]Template{
         .{ .version_header = notcurses_version },
         .{ .build_definition = build_definition },
     });
-    notcurses_core.step.dependOn(&version_header_step.step);
-    addNotCursesSources("", notcurses_core, build_definition.use_asan);
-    addNotCursesCompatSources("", notcurses_core, build_definition.use_asan);
-    notcurses_core.linkLibC();
-    notcurses_core.install();
-
-    // if you see this no you didnt
-    // notcurses_core.addIncludePath("/nix/store/n21y30l69psnvpwjr0la3kmlnrvc6qz7-ncurses-6.3-dev/include");
-    // notcurses_core.addIncludePath("/nix/store/9zc54l2sw1vbk4b22418yc4fq7b8mpy9-libunistring-0.9.10-dev/include");
-    // notcurses_core.addIncludePath("/nix/store/8n53jsvbnqxrasgwd3c2xjygai9v4byl-libdeflate-1.8/include");
+    step.step.dependOn(&version_header_step.step);
+    addNotCursesSources(root, step, build_definition.use_asan);
+    addNotCursesCompatSources(root, step, build_definition.use_asan);
 }
 
 pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep) void {
