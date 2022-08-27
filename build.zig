@@ -217,6 +217,14 @@ pub fn linkNotCursesLibraries(step: *std.build.LibExeObjStep, build_definition: 
     step.linkSystemLibrary("unistring");
 }
 
+pub fn addNotCursesFfiSources(comptime root: []const u8, step: *std.build.LibExeObjStep, use_asan: bool) void {
+    step.addCSourceFiles(&[_][]const u8{
+        root ++ "src/libffi/ffi.c",
+    }, globalCompilerFlags(use_asan));
+    step.addIncludePath(root ++ "src");
+    step.addIncludePath(root ++ "include");
+}
+
 pub fn addNotCursesSources(comptime root: []const u8, step: *std.build.LibExeObjStep, use_asan: bool) void {
     step.addCSourceFiles(&[_][]const u8{
         root ++ "src/lib/automaton.c",
